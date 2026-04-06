@@ -6,16 +6,18 @@ import PlantDetail from './components/PlantDetail.jsx'
 import Setup from './components/Setup.jsx'
 
 const STORAGE_KEY = 'plant_app_config'
+const SEASON_KEY = 'plant_app_season'
 
 export default function App() {
   const [config, setConfig] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null }
     catch { return null }
   })
+  const [season, setSeason] = useState(() => localStorage.getItem(SEASON_KEY) || 'ete')
   const [plants, setPlants] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [view, setView] = useState('list') // list | form | detail
+  const [view, setView] = useState('list')
   const [selectedPlant, setSelectedPlant] = useState(null)
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
@@ -34,9 +36,13 @@ export default function App() {
     }
   }, [config])
 
-  useEffect(() => {
-    if (config) load()
-  }, [config])
+  useEffect(() => { if (config) load() }, [config])
+
+  const toggleSeason = () => {
+    const next = season === 'ete' ? 'hiver' : 'ete'
+    setSeason(next)
+    localStorage.setItem(SEASON_KEY, next)
+  }
 
   const save = async (updatedPlants) => {
     setSaving(true)
@@ -98,9 +104,7 @@ export default function App() {
     setPlants([])
   }
 
-  if (!config) {
-    return <Setup onSetup={handleSetup} />
-  }
+  if (!config) return <Setup onSetup={handleSetup} />
 
   if (view === 'form') {
     return (
@@ -117,6 +121,7 @@ export default function App() {
     return (
       <PlantDetail
         plant={plants.find(p => p.id === selectedPlant.id) || selectedPlant}
+        season={season}
         onEdit={() => setView('form')}
         onDelete={() => handleDelete(selectedPlant.id)}
         onWater={() => handleWater(selectedPlant.id)}
@@ -129,6 +134,7 @@ export default function App() {
   return (
     <PlantList
       plants={plants}
+      season={season}
       loading={loading}
       syncing={syncing}
       error={error}
@@ -137,6 +143,7 @@ export default function App() {
       onSync={handleSync}
       onLogout={logout}
       onWater={handleWater}
+      onToggleSeason={toggleSeason}
     />
   )
 }
